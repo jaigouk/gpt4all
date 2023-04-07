@@ -32,6 +32,39 @@ RSpec.describe Gpt4all::ConversationalAI do
     end
   end
 
+  describe '#download_with_progress_bar' do
+    context 'when an incomplete file is downloaded' do
+      it 'raises an error' do
+        incomplete_response_body = 'This is a mock file content'
+        incomplete_response = instance_double(Faraday::Response)
+        allow(incomplete_response).to receive(:headers).and_return(
+          'Content-Length' => incomplete_response_body.length * 2
+        )
+        allow(incomplete_response).to receive_message_chain(:body, :each_chunk).and_yield(incomplete_response_body)
+
+        expect do
+          gpt4all.send(:download_with_progress_bar, incomplete_response, 'model.bin',
+                       incomplete_response_body.length * 2)
+        end.to raise_error(RuntimeError, 'Incomplete file downloaded.')
+      end
+    end
+
+    context 'when a network error occurs during download' do
+      it 'raises an error' do
+        model_url = "https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/#{gpt4all.model}.bin"
+
+        stub_request(:get, model_url)
+          .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'identity', 'User-Agent' => 'Faraday v2.7.4' })
+          .to_raise(Faraday::ConnectionFailed.new('Network error'))
+
+        expect do
+          gpt4all.send(:download_with_progress_bar, gpt4all.send(:create_faraday_connection, model_url), 'model.bin',
+                       100)
+        end.to raise_error(Faraday::ConnectionFailed, 'Network error')
+      end
+    end
+  end
+
   describe '#start_bot' do
     it 'starts the bot and waits for it to be ready' do
       gpt4all.prepare_resources

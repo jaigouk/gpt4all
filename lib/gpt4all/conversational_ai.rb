@@ -130,10 +130,13 @@ module Gpt4all
 
     def write_chunks_to_file(response, destination, progress_bar)
       File.open(destination, 'wb') do |file|
+        downloaded_size = 0
         response.body.each_chunk do |chunk|
           progress_bar.advance(chunk.bytesize)
           file.write(chunk)
+          downloaded_size += chunk.bytesize
         end
+        raise 'Incomplete file downloaded.' if downloaded_size < progress_bar.total
       end
     end
 
