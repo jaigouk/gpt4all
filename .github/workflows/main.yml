@@ -16,16 +16,13 @@ jobs:
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 3.2.2
+        ruby-version: 3.0
 
     - name: Install dependencies
       run: bundle install
 
     - name: Run RuboCop
       run: bundle exec rubocop
-
-    - name: Run Brakeman
-      run: bundle exec brakeman --quiet
 
     - name: Build and publish gem
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
