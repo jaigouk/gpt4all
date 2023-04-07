@@ -67,8 +67,8 @@ module Gpt4all
     end
 
     def download_executable
-      upstream = determine_upstream_url
-      download_file(upstream, executable_path)
+      FileUtils.mkdir_p(File.dirname(executable_path))
+      download_file(determine_upstream_url, executable_path)
       FileUtils.chmod(0o755, executable_path)
       puts "File downloaded successfully to #{executable_path}"
     end

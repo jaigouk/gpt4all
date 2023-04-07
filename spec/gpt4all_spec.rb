@@ -36,7 +36,8 @@ RSpec.describe Gpt4all::ConversationalAI do
     context 'when an incomplete file is downloaded' do
       it 'raises an error' do
         incomplete_response_body = 'This is a mock file content'
-        incomplete_response = instance_double(Faraday::Response)
+        incomplete_response = Struct.new(:body).new(StringChunksWrapper.new(incomplete_response_body))
+
         allow(incomplete_response).to receive(:headers).and_return(
           'Content-Length' => incomplete_response_body.length * 2
         )
