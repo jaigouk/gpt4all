@@ -1,5 +1,8 @@
 # Gpt4all
 
+[![Gem Version](https://badge.fury.io/rb/gpt4all.svg)](https://badge.fury.io/rb/gpt4all)
+[![CI](https://github.com/jaigouk/gpt4all/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/jaigouk/gpt4all/actions/workflows/main.yml)
+
 Gpt4all is a Ruby gem that provides an easy-to-use interface for interacting with the GPT-4 conversational AI model.
 
 ## Installation
