@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [main]
+    tags:
+      - 'v*'
   pull_request:
     branches: [main]
 
@@ -24,8 +26,23 @@ jobs:
     - name: Run RuboCop
       run: bundle exec rubocop
 
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.0
+
+    - name: Install dependencies
+      run: bundle install
+
     - name: Build and publish gem
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       run: |
         gem build *.gemspec
         gem push *.gem
