@@ -7,6 +7,9 @@ RSpec.describe Gpt4all::ConversationalAI do
   let(:response_body) { 'This is a mock file content.' }
 
   before do
+    gpt4all.model_path = File.join(File.dirname(__FILE__), 'fixtures', 'model.bin')
+    gpt4all.executable_path = File.join(File.dirname(__FILE__), 'fixtures', 'gpt4all_executable')
+
     executable_url = gpt4all.send(:determine_upstream_url)
     model_url = "https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/#{gpt4all.model}.bin"
 
