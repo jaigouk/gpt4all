@@ -1,0 +1,27 @@
+module Gpt4all
+  VERSION: String
+
+  class ConversationalAI
+    @bot: Process::Child | nil
+    @model: String
+    @decoder_config: Hash[String, untyped]
+    @executable_path: String
+    @model_path: String
+
+    def initialize: (String? model, bool? force_download, Hash[String, untyped]? decoder_config) -> void
+
+    def init: (?bool force_download) -> void
+
+    def open: () -> void
+
+    def close: () -> void
+
+    private def download_executable: () -> void
+
+    private def download_model: () -> void
+
+    private def download_file: (String url, String destination) -> void
+
+    def prompt: (String input) -> String
+  end
+end

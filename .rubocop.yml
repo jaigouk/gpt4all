@@ -1,0 +1,30 @@
+require:
+  - rubocop-performance
+  - rubocop-sequel
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  Exclude:
+    - db/**/*.rb
+    - bin/**/*.rb
+    - bin/*
+    - vendor/**/*
+    - coverage/**/*
+
+Metrics/BlockLength:
+  Exclude:
+    - spec/support/shared_contexts/*.rb
+    - spec/support/shared_examples/*.rb
+    - spec/**/*_spec.rb
+    - spec/factories/*.rb
+
+Style/Documentation:
+  Enabled: false
+
+Style/HashSyntax:
+  Enabled: false
+
+Style/RescueModifier:
+  Exclude:
+    - spec/**/*_spec.rb
