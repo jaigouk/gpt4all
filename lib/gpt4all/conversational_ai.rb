@@ -9,7 +9,7 @@ require 'tty-progressbar'
 module Gpt4all
   # rubocop:disable Metrics/ClassLength
   class ConversationalAI
-    attr_accessor :bot, :model, :decoder_config, :executable_path, :model_path, :force_download, :test_mode
+    attr_accessor :model, :decoder_config, :executable_path, :model_path, :force_download, :test_mode
 
     OSX_INTEL_URL = 'https://github.com/nomic-ai/gpt4all/blob/main/chat/gpt4all-lora-quantized-OSX-intel?raw=true'
     OSX_M1_URL = 'https://github.com/nomic-ai/gpt4all/blob/main/chat/gpt4all-lora-quantized-OSX-m1?raw=true'
@@ -65,6 +65,30 @@ module Gpt4all
       @bot = nil
       @bot_pid = nil
     end
+
+    def restart_bot
+      stop_bot
+      start_bot
+    end
+
+    def prompt(input)
+      ensure_bot_is_ready
+
+      begin
+        bot.first.puts(input)
+        response = bot.last.gets.strip
+      rescue StandardError => e
+        puts "Error during prompt: #{e.message}"
+        restart_bot
+        response = prompt(input)
+      end
+
+      response
+    end
+
+    private
+
+    attr_reader :bot
 
     def download_executable
       FileUtils.mkdir_p(File.dirname(executable_path))
@@ -147,28 +171,8 @@ module Gpt4all
       end
     end
 
-    def prompt(input)
-      ensure_bot_is_ready
-
-      begin
-        bot.first.puts(input)
-        response = bot.last.gets.strip
-      rescue StandardError => e
-        puts "Error during prompt: #{e.message}"
-        restart_bot
-        response = prompt(input)
-      end
-
-      response
-    end
-
     def ensure_bot_is_ready
       raise 'Bot is not initialized.' unless bot
-    end
-
-    def restart_bot
-      stop_bot
-      start_bot
     end
   end
   # rubocop:enable Metrics/ClassLength
