@@ -6,32 +6,45 @@ RSpec.describe Gpt4all::ConversationalAI do
   let(:gpt4all) { Gpt4all::ConversationalAI.new }
   let(:response_body) { 'This is a mock file content.' }
 
+  let(:executable_url) { gpt4all.send(:determine_upstream_url) }
+  let(:md5_url) { "https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/#{gpt4all.model}.bin.md5" }
+  let(:model_url) { "https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/#{gpt4all.model}.bin" }
+  let(:md5_path) { "#{gpt4all.model_path}.md5" }
+  let(:mock_md5) { Digest::MD5.hexdigest(response_body) }
+
   before do
     gpt4all.model_path = File.join(File.dirname(__FILE__), 'fixtures', 'model.bin')
     gpt4all.executable_path = File.join(File.dirname(__FILE__), 'fixtures', 'gpt4all_executable')
 
-    executable_url = gpt4all.send(:determine_upstream_url)
-    model_url = "https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/#{gpt4all.model}.bin"
-
     stub_request(:get, executable_url)
       .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'identity', 'User-Agent' => 'Faraday v2.7.4' })
-      .to_return(status: 200, body: 'This is a mock file content.', headers: {})
+      .to_return(status: 200, body: response_body, headers: {})
 
     stub_request(:get, model_url)
       .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'identity', 'User-Agent' => 'Faraday v2.7.4' })
-      .to_return(status: 200, body: 'This is a mock file content.', headers: {})
+      .to_return(status: 200, body: response_body, headers: {})
+
+    stub_request(:get, md5_url)
+      .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'identity', 'User-Agent' => 'Faraday v2.7.4' })
+      .to_return(status: 200, body: mock_md5, headers: {})
   end
 
   describe '#prepare_resources' do
     it 'calls download_executable and download_model if force_download is true' do
       allow(gpt4all).to receive(:download_executable).and_call_original
       allow(gpt4all).to receive(:download_model).and_call_original
+      allow(gpt4all).to receive(:download_md5_file).and_return(true)
       allow(gpt4all).to receive(:write_chunks_to_file).and_return(true)
+
+      fixture_md5_path = File.join(File.dirname(__FILE__), 'fixtures', 'model_md5.txt')
+      File.write(md5_path, File.read(fixture_md5_path))
+      File.write(gpt4all.model_path, response_body)
 
       gpt4all.prepare_resources(force_download: true)
 
       expect(gpt4all).to have_received(:download_executable)
       expect(gpt4all).to have_received(:download_model)
+      expect(gpt4all).to have_received(:download_md5_file)
     end
   end
 
@@ -65,6 +78,51 @@ RSpec.describe Gpt4all::ConversationalAI do
           gpt4all.send(:download_with_progress_bar, gpt4all.send(:create_faraday_connection, model_url), 'model.bin',
                        100)
         end.to raise_error(Faraday::ConnectionFailed, 'Network error')
+      end
+    end
+  end
+
+  describe '#verify_md5_signature' do
+    before do
+      gpt4all.model_path = File.join(File.dirname(__FILE__), 'fixtures', 'model.bin')
+      gpt4all.executable_path = File.join(File.dirname(__FILE__), 'fixtures', 'gpt4all_executable')
+
+      stub_request(:get, executable_url)
+        .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'identity', 'User-Agent' => 'Faraday v2.7.4' })
+        .to_return(status: 200, body: 'This is a mock file content.', headers: {})
+
+      stub_request(:get, model_url)
+        .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'identity', 'User-Agent' => 'Faraday v2.7.4' })
+        .to_return(status: 200, body: 'This is a mock file content.', headers: {})
+
+      stub_request(:get, md5_url)
+        .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'identity', 'User-Agent' => 'Faraday v2.7.4' })
+        .to_return(status: 200, body: mock_md5, headers: {})
+    end
+
+    context 'when MD5 check is successful' do
+      it 'does not raise an error' do
+        File.write(md5_path, mock_md5)
+        File.write(gpt4all.model_path, response_body)
+
+        expect { gpt4all.send(:verify_md5_signature) }.not_to raise_error
+      end
+    end
+
+    context 'when MD5 check fails' do
+      it 'raises an MD5 signature mismatch error' do
+        File.write(md5_path, mock_md5)
+        File.write(gpt4all.model_path, 'Different content')
+
+        expect { gpt4all.send(:verify_md5_signature) }.to raise_error(RuntimeError, 'MD5 signature mismatch.')
+      end
+    end
+
+    context 'when MD5 file is not found' do
+      it 'raises an MD5 file not found error' do
+        FileUtils.rm_f(md5_path)
+
+        expect { gpt4all.send(:verify_md5_signature) }.to raise_error(RuntimeError, 'MD5 file not found.')
       end
     end
   end

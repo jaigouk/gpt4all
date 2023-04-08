@@ -11,6 +11,7 @@ module Gpt4all
   class ConversationalAI
     attr_accessor :model, :decoder_config, :executable_path, :model_path, :force_download, :test_mode
 
+    # https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/gpt4all-lora-quantized.bin
     OSX_INTEL_URL = 'https://github.com/nomic-ai/gpt4all/blob/main/chat/gpt4all-lora-quantized-OSX-intel?raw=true'
     OSX_M1_URL = 'https://github.com/nomic-ai/gpt4all/blob/main/chat/gpt4all-lora-quantized-OSX-m1?raw=true'
     LINUX_URL = 'https://github.com/nomic-ai/gpt4all/blob/main/chat/gpt4all-lora-quantized-linux-x86?raw=true'
@@ -111,8 +112,9 @@ module Gpt4all
 
     def download_model
       model_url = "https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/#{model}.bin"
-
       download_file(model_url, model_path)
+      download_md5_file
+      verify_md5_signature
 
       puts "File downloaded successfully to #{model_path}"
     end
@@ -162,6 +164,23 @@ module Gpt4all
         end
         raise 'Incomplete file downloaded.' if downloaded_size < progress_bar.total
       end
+    end
+
+    def download_md5_file
+      md5_url = "https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/#{model}.bin.md5"
+      md5_path = "#{model_path}.md5"
+      download_file(md5_url, md5_path)
+    end
+
+    def verify_md5_signature
+      md5_path = "#{model_path}.md5"
+      raise 'MD5 file not found.' unless File.exist?(md5_path)
+
+      expected_md5 = File.read(md5_path).strip
+      actual_md5 = Digest::MD5.file(model_path).hexdigest
+      raise 'MD5 signature mismatch.' unless expected_md5 == actual_md5
+
+      puts 'MD5 signature verified successfully.'
     end
 
     def wait_for_bot_ready
