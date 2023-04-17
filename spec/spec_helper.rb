@@ -3,6 +3,7 @@
 require 'gpt4all'
 require 'support/webmock'
 require 'support/incomplete_response_helper'
+require 'debug'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

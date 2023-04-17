@@ -131,7 +131,7 @@ RSpec.describe Gpt4all::ConversationalAI do
     it 'starts the bot and waits for it to be ready' do
       gpt4all.prepare_resources
 
-      allow_any_instance_of(Process::Waiter).to receive(:gets).and_return('Bot is ready >')
+      allow_any_instance_of(IO).to receive(:read_nonblock).and_return('Bot is ready >')
 
       gpt4all.start_bot
       expect(gpt4all.instance_variable_get(:@bot)).not_to be_nil, "Expected bot to be started, but it's not."
@@ -140,13 +140,13 @@ RSpec.describe Gpt4all::ConversationalAI do
 
   describe '#stop_bot' do
     it 'stops the bot and cleans up resources' do
-      allow_any_instance_of(Process::Waiter).to receive(:gets).and_return('Bot is ready >')
+      allow_any_instance_of(IO).to receive(:read_nonblock).and_return('Bot is ready >')
       gpt4all.prepare_resources
       gpt4all.start_bot
 
       expect(gpt4all.instance_variable_get(:@bot)).not_to be_nil, "Expected bot to be started, but it's not."
 
-      allow_any_instance_of(Process::Waiter).to receive(:close).and_return('Bot is finished >')
+      allow_any_instance_of(IOError).to receive(:close).and_return('Bot is finished >')
 
       gpt4all.stop_bot
 
@@ -159,8 +159,9 @@ RSpec.describe Gpt4all::ConversationalAI do
   describe '#prompt' do
     context 'when bot is initialized' do
       it 'returns a response' do
-        allow_any_instance_of(Process::Waiter).to receive(:gets).and_return('Bot is ready >',
-                                                                            'This is a sample response.')
+        allow_any_instance_of(IO).to receive(:read_nonblock).and_return('Bot is ready >',
+                                                                        'This is a sample response.',
+                                                                        '>', 'Another response.')
         gpt4all.prepare_resources
         gpt4all.start_bot
 

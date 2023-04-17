@@ -14,6 +14,7 @@ gem 'rubocop', '~> 1.21'
 gem 'brakeman'
 gem 'bundler-audit'
 gem 'byebug'
+gem 'debug'
 gem 'dotenv'
 
 gem 'rubocop-performance'
@@ -21,3 +22,4 @@ gem 'rubocop-sequel'
 gem 'rubocop-shopify'
 
 gem 'webmock', require: false
+
