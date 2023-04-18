@@ -22,4 +22,3 @@ gem 'rubocop-sequel'
 gem 'rubocop-shopify'
 
 gem 'webmock', require: false
-
