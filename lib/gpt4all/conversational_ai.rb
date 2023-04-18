@@ -159,7 +159,7 @@ module Gpt4all
     def write_chunks_to_file(response, destination, progress_bar)
       File.open(destination, 'wb') do |file|
         downloaded_size = 0
-        response.body.each_chunk do |chunk|
+        response.body.each(2048) do |chunk|
           progress_bar.advance(chunk.bytesize)
           file.write(chunk)
           downloaded_size += chunk.bytesize

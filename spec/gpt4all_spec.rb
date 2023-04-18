@@ -57,7 +57,7 @@ RSpec.describe Gpt4all::ConversationalAI do
         allow(incomplete_response).to receive(:headers).and_return(
           'Content-Length' => incomplete_response_body.length * 2
         )
-        allow(incomplete_response).to receive_message_chain(:body, :each_chunk).and_yield(incomplete_response_body)
+        allow(incomplete_response.body).to receive(:each).and_yield(incomplete_response_body)
 
         expect do
           gpt4all.send(:download_with_progress_bar, incomplete_response, 'model.bin',
