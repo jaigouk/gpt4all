@@ -62,7 +62,9 @@ module Gpt4all
     def stop_bot
       return unless bot
 
-      bot.each(&:close)
+      bot[0].close
+      bot[1].close
+      bot[2].exit
       @bot = nil
       @bot_pid = nil
     end
@@ -77,7 +79,7 @@ module Gpt4all
 
       begin
         bot.first.puts(input)
-        response = bot.last.gets.strip
+        response = read_from_bot
       rescue StandardError => e
         puts "Error during prompt: #{e.message}"
         restart_bot
@@ -183,11 +185,26 @@ module Gpt4all
       puts 'MD5 signature verified successfully.'
     end
 
-    def wait_for_bot_ready
+    # remove the stop character from end of the output
+    def strip_stop(output, stop)
+      output[0...output.rindex(stop)]
+    end
+
+    def read_from_bot(stop: '>')
+      output = ''
       loop do
-        output = bot.last.gets
-        break if output&.include?('>')
+        new_output = bot[1].read_nonblock(2048)
+        output += new_output
+        return strip_stop(output, stop) if new_output&.include?(stop)
+
+      rescue IO::WaitReadable
+        bot[1].wait_readable
+        retry
       end
+    end
+
+    def wait_for_bot_ready
+      read_from_bot
     end
 
     def ensure_bot_is_ready

@@ -14,6 +14,7 @@ gem 'rubocop', '~> 1.21'
 gem 'brakeman'
 gem 'bundler-audit'
 gem 'byebug'
+gem 'debug'
 gem 'dotenv'
 
 gem 'rubocop-performance'
